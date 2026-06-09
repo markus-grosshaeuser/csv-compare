@@ -1,0 +1,25 @@
+:root {
+    --window: #f5f1ee;
+    --page-background: #cfccca;
+    --inner-element-background: var(--window);
+    --inner-element-border: #afacaa;
+
+    --accent-dark: #ec5103;
+    --accent: #ec7103;
+    --accent-light: #fc9123;
+
+    --disabled-element-background: #5e5e68;
+    --disabled-element-border: #3e3e48;
+    --disabled-element-hover: #7e7e88;
+
+    --enabled-button-background: var(--accent);
+    --enabled-button-border: var(--accent-dark);
+    --enabled-button-hover: var(--accent-light);
+    --enabled-button-active: #fc9123aa;
+
+    --text-heavy: #091010;
+    --text-light: #2f4e4e;
+    --preferred-font: Roboto;
+
+    --border-radius: 5px;
+}

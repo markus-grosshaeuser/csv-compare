@@ -1,0 +1,17 @@
+services:
+    frontend:
+        image: nginx:alpine
+        container_name: csv_compare
+        build:
+            dockerfile_inline: |
+                FROM nginx:alpine
+                COPY ./dist/. /usr/share/nginx/html
+                EXPOSE 80
+        restart: unless-stopped
+        volumes:
+            - ./dist:/usr/share/nginx/html
+        ports:
+            - 8080:80
+
+volumes:
+    dist:

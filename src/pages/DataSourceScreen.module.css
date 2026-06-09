@@ -1,0 +1,69 @@
+@import '../theme.css';
+
+.dataSourceScreen {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    width: 900px;
+    margin: 0;
+    background-color: var(--page-background);
+    padding: 20px;
+    border-radius: var(--border-radius);
+}
+
+.dataSourceScreen h1 {
+    margin-bottom: 50px;
+}
+
+.file-upload-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.dataSourceScreen .button {
+    border-radius: 50%;
+}
+
+.dataSourceScreen .button:disabled {
+    background-color: var(--disabled-element-background);
+    border: 2px solid var(--disabled-element-border);
+}
+
+.dataSourceScreen .button:enabled {
+    background-color: var(--enabled-button-background);
+    border: 2px solid var(--enabled-button-border);
+}
+
+.dataSourceScreen .button:enabled:hover {
+    background-color: var(--enabled-button-hover);
+}
+
+.dataSourceScreen .button:enabled:active {
+    background-color: var(--enabled-button-active);
+}
+
+.dataSourceCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 320px;
+    height: auto;
+    margin: 10px;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    background: var(--inner-element-background);
+    border: 2px solid var(--inner-element-border);
+}
+
+.dataSourceCard h2 {
+    margin-bottom: 25px;
+}
+
+.dataSourceCard p {
+    padding: 0 20px;
+    color: var(--text-light);
+}

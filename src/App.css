@@ -1,0 +1,8 @@
+@import './theme.css';
+
+.app {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: var(--border-radius);
+    box-shadow: 5px 5px 10px dimgray;
+}

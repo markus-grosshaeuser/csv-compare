@@ -1,0 +1,55 @@
+@import './theme.css';
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--preferred-font), sans-serif;
+    color: var(--text-heavy);
+    background-color: var(--window);
+    min-height: 100vh;
+    min-width: 100vw;
+    margin: 0;
+}
+
+h1 {
+    font-size: 3rem;
+    color: var(--text-heavy);
+}
+
+h1 b {
+    color: var(--text-light);
+}
+
+h2 {
+    font-size: 1.6rem;
+    color: var(--text-light);
+}
+
+h2 b {
+    color: var(--accent);
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltipText {
+    width: 150px;
+    background-color: var(--accent-light);
+    color: #111;
+    opacity: 0;
+    text-align: center;
+    padding: 5px;
+    border-radius: 5px;
+    position: absolute;
+    margin: -30px -200px;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltipText {
+    opacity: 1;
+    transition: 0.25s ease-in-out;
+}

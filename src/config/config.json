@@ -1,0 +1,10 @@
+{
+    "source": {
+        "name": "Database",
+        "icon": "/img/database.svg"
+    },
+    "target": {
+        "name": "Cloud",
+        "icon": "/img/cloud.svg"
+    }
+}
