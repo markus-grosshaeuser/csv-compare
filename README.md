@@ -1,11 +1,12 @@
 # CSV Compare
 
-![](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript)
-![](https://img.shields.io/badge/React-19-blue?logo=react)
-![](https://img.shields.io/badge/Vite-8-blue?logo=vite)
-![](https://img.shields.io/badge/npm-11-blue?logo=npm)
-![](https://img.shields.io/badge/license-MIT-orange)
-![](https://img.shields.io/badge/test--coverage-98.5-brightgreen)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/version_1_0_0.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/TypeScript-v6.0.3.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/React-v19.2.6.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/Vite-v8.0.12.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/npm-v11.13.0.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/license-MIT.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/test--coverage.svg)
 
 CSV Compare is a React-based web application for comparing two CSV exports from different data sources.
 
