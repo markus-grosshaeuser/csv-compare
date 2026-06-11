@@ -1,12 +1,12 @@
 # CSV Compare
 
-![](https://github.com/markus-grosshaeuser/badges/blob/main/version_1_0_0.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/TypeScript-v6.0.3.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/React-v19.2.6.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/Vite-v8.0.12.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/npm-v11.13.0.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/versions/version_1_0_1.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/languages/TypeScript-v6.0.3.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/frameworks/React-v19.2.6.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/tools/Vite-v8.0.12.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/tools/npm-v11.13.0.svg)
 ![](https://github.com/markus-grosshaeuser/badges/blob/main/license-MIT.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/test--coverage.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/tests/tc-985.svg)
 
 CSV Compare is a React-based web application for comparing two CSV exports from different data sources.
 

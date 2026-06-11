@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import FileDropArea from '../components/FileDropArea.tsx'
 import { type FileDispatch, type RootState } from '../redux/store.ts'
 import { setDestinationFile, setSourceFile } from '../redux/fileSlice.ts'
-import checkIcon from '../assets/check.svg'
+import startIcon from '../assets/start.svg'
 import Style from './DataSourceScreen.module.css'
 import Config from '../config/config.json'
 
@@ -52,6 +52,8 @@ export default function DataSourceScreen() {
 
     return (
         <div className={Style.dataSourceScreen}>
+            <div className={Style.symmetricButtonBalancer}></div>
+
             <div className={Style.dataSourceCard}>
                 <h2>
                     {t('data_source')}: <b>{Config.source.name}</b>
@@ -66,15 +68,6 @@ export default function DataSourceScreen() {
                 </FileDropArea>
                 <p>{t('put_data_file_here')}</p>
             </div>
-
-            <button
-                disabled={!(sourceFile.name && destinationFile.name)}
-                className={Style.button}
-                aria-label={t('continue_to_evaluation')}
-                onClick={onButtonClick}
-            >
-                <img alt="" src={checkIcon} aria-hidden="true" />
-            </button>
 
             <div className={Style.dataSourceCard}>
                 <h2>
@@ -92,6 +85,17 @@ export default function DataSourceScreen() {
                     <img alt="" src={Config.target.icon} aria-hidden="true" />
                 </FileDropArea>
                 <p>{t('put_data_file_here')}</p>
+            </div>
+
+            <div
+                role="button"
+                hidden={!(sourceFile.name && destinationFile.name)}
+                // className={Style.button}
+                className={((sourceFile.name && destinationFile.name) ? Style.buttonEnabled : Style.buttonDisabled) + ' ' + Style.button}
+                aria-label={t('continue_to_evaluation')}
+                onClick={onButtonClick}
+            >
+                <img alt="" src={startIcon} aria-hidden="true" hidden={!(sourceFile.name && destinationFile.name)}/>
             </div>
         </div>
     )
