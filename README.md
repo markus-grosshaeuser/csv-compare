@@ -14,30 +14,6 @@ The app is designed for scenarios where one CSV represents a source system, such
 
 ---
 
-## Contents
-
-- [Features](#features)
-- [Quickstart with Docker](#quickstart-with-docker)
-- [How It Works](#how-it-works)
-- [CSV Input Requirements](#csv-input-requirements)
-- [Deployment of the pre-build files](#deployment-of-the-pre-build-files)
-- [Configuration](#configuration)
-  - [CSV Template Configuration](#csv-template-configuration)
-  - [Source and Target Display Configuration](#source-and-target-display-configuration)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Building the Application](#building-the-application)
-    - [Requirements](#requirements)
-    - [Getting Started](#getting-started)
-    - [Available Scripts](#available-scripts)
-    - [Testing](#testing)
-- [Internationalization](#internationalization)
-- [Browser Behavior](#browser-behavior)
-- [Development Notes](#development-notes)
-- [License](#license)
-
----
-
 ## Features
 
 - Upload two CSV files via drag-and-drop or file picker
@@ -52,6 +28,22 @@ The app is designed for scenarios where one CSV represents a source system, such
 - Unit and component tests with Vitest and React Testing Library (RTL)
 - Linting with ESLint
 - Built with React, TypeScript, and Vite
+
+---
+
+## Tech Stack
+
+- React
+- TypeScript
+- Vite
+- Redux Toolkit
+- React Redux
+- React Router
+- i18next / react-i18next
+- PapaParse
+- Vitest and React Testing Library (RTL)
+- ESLint
+- Prettier
 
 ---
 
@@ -83,6 +75,28 @@ If you make changes to the Docker setup, rebuild the container with:
     - insertions: records present in the source but missing in the target
     - deletions: records present in the target but missing in the source
 6. The user can download both generated CSV files.
+
+---
+
+## Screenshots
+
+### Initial screen: no files selected
+
+When the application is opened, two upload areas are shown side by side: one for a CSV file in source system format (left) and one for a CSV file in target system format (right). At this point, no files have been selected yet, so the evaluation action is hidden until both required inputs are available.
+
+![](./screenshots/01_no_files_selected.png)
+
+### Ready for evaluation: both files have been selected
+
+After selecting both CSV files, the application displays the chosen file names for the source and target systems. Once both inputs are present, the evaluation button becomes visible and allows the user to continue with the comparison process.
+
+![](./screenshots/02_files_selected.png)
+
+### Evaluation result: generated output files
+
+After the files have been processed, the application shows the generated CSV output previews. The top result contains rows that should be inserted into the target system, while the bottom result contains rows that should be removed from it. Each result can be downloaded as a separate CSV file using the corresponding download button.
+
+![](./screenshots/03_files_processed.png)
 
 ---
 
@@ -204,23 +218,6 @@ Example:
 These values are used in the UI to describe the two compared systems.
 
 Changing this configuration **requires a rebuild** of the application.
-
----
-
-## Tech Stack
-
-- React
-- TypeScript
-- Vite
-- Redux Toolkit
-- React Redux
-- React Router
-- i18next / react-i18next
-- PapaParse
-- Vitest
-- React Testing Library (RTL)
-- ESLint
-- Prettier
 
 ---
 
