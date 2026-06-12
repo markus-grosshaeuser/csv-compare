@@ -89,13 +89,24 @@ export default function DataSourceScreen() {
 
             <div
                 role="button"
+                data-testid="evaluation_button"
                 hidden={!(sourceFile.name && destinationFile.name)}
-                // className={Style.button}
-                className={((sourceFile.name && destinationFile.name) ? Style.buttonEnabled : Style.buttonDisabled) + ' ' + Style.button}
+                className={
+                    (sourceFile.name && destinationFile.name
+                        ? Style.buttonEnabled
+                        : Style.buttonDisabled) +
+                    ' ' +
+                    Style.button
+                }
                 aria-label={t('continue_to_evaluation')}
                 onClick={onButtonClick}
             >
-                <img alt="" src={startIcon} aria-hidden="true" hidden={!(sourceFile.name && destinationFile.name)}/>
+                <img
+                    alt=""
+                    src={startIcon}
+                    aria-hidden="true"
+                    hidden={!(sourceFile.name && destinationFile.name)}
+                />
             </div>
         </div>
     )

@@ -42,12 +42,10 @@ describe('DataSourceScreen', () => {
         expect(screen.getByText('Database')).toBeInTheDocument()
         expect(screen.getByText('Cloud')).toBeInTheDocument()
         expect(screen.getAllByText('No file selected')).toHaveLength(2)
-        expect(
-            screen.getByRole('button', { name: /continue to evaluation/i }),
-        ).toBeDisabled()
+        expect(screen.getByTestId('evaluation_button')).not.toBeVisible()
     })
 
-    it('should keep the continue button disabled until both files are selected', () => {
+    it('should keep the continue button hidden until both files are selected', () => {
         renderWithProviders(<DataSourceScreen />)
 
         const sourceFile = new File(['id,name\n1,Ada'], 'source.csv', {
@@ -65,9 +63,7 @@ describe('DataSourceScreen', () => {
         })
 
         expect(screen.getByText('File: source.csv')).toBeInTheDocument()
-        expect(
-            screen.getByRole('button', { name: /continue to evaluation/i }),
-        ).toBeDisabled()
+        expect(screen.getByTestId('evaluation_button')).not.toBeVisible()
         expect(navigateMock).not.toHaveBeenCalled()
     })
 
@@ -103,9 +99,7 @@ describe('DataSourceScreen', () => {
         expect(screen.getByText('File: source.csv')).toBeInTheDocument()
         expect(screen.getByText('File: destination.csv')).toBeInTheDocument()
 
-        const continueButton = screen.getByRole('button', {
-            name: /continue to evaluation/i,
-        })
+        const continueButton = screen.getByTestId('evaluation_button')
 
         expect(continueButton).toBeEnabled()
 
@@ -167,7 +161,7 @@ describe('DataSourceScreen', () => {
         renderWithProviders(<DataSourceScreen />)
 
         fireEvent.click(
-            screen.getByRole('button', { name: /continue to evaluation/i }),
+            screen.getByTestId('evaluation_button'),
         )
 
         expect(navigateMock).not.toHaveBeenCalled()
