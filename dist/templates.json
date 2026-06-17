@@ -1,0 +1,8 @@
+{
+    "templates": [
+        {
+            "name": "Custom Template",
+            "path": "/templates/custom.json"
+        }
+    ]
+}

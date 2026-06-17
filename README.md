@@ -1,80 +1,59 @@
 # CSV Compare
 
-![](https://github.com/markus-grosshaeuser/badges/blob/main/versions/version_1_0_1.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/versions/version_2_0_0.svg)
+![](https://github.com/markus-grosshaeuser/badges/blob/main/license-MIT.svg)
 ![](https://github.com/markus-grosshaeuser/badges/blob/main/languages/TypeScript-v6.0.3.svg)
 ![](https://github.com/markus-grosshaeuser/badges/blob/main/frameworks/React-v19.2.6.svg)
 ![](https://github.com/markus-grosshaeuser/badges/blob/main/tools/Vite-v8.0.12.svg)
 ![](https://github.com/markus-grosshaeuser/badges/blob/main/tools/npm-v11.13.0.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/license-MIT.svg)
-![](https://github.com/markus-grosshaeuser/badges/blob/main/tests/tc-985.svg)
 
-CSV Compare is a React-based web application for comparing two CSV exports from different data sources.
+CSV Compare is a client-side web application for comparing two CSV exports from different systems.
 
-The app is designed for scenarios where one CSV represents a source system, such as a database, and another CSV represents a target system, such as a cloud service. It determines which rows need to be inserted into the target system and which rows should be removed from it.
+It is designed for synchronization scenarios where one CSV file represents a **source system** and another CSV file represents a **target system**. Based on a configurable column mapping and primary key definition, the application determines which records should be inserted into the target system and which records should be removed from it.
+
+The application runs completely in the browser. No backend service is required for the normal CSV comparison workflow.
 
 ---
 
 ## Features
 
-- Upload two CSV files via drag-and-drop or file picker
-- Compare source and target datasets using configurable column mappings
-- Generate two synchronization CSV outputs:
+- Compare two CSV files from different systems
+- Upload files via drag-and-drop or file picker
+- Select predefined CSV templates
+- Upload custom CSV templates
+- Create a template manually from detected CSV headers
+- Download generated template JSON files for later reuse
+- Map source columns to target columns
+- Support single-column and compound primary keys
+- Generate synchronization results:
     - rows to insert into the target system
-    - rows to remove from the target system
-- Download generated CSV results
-- Configurable source and target names/icons
-- Internationalization support for English and German
-- Client-side processing
-- Unit and component tests with Vitest and React Testing Library (RTL)
-- Linting with ESLint
-- Built with React, TypeScript, and Vite
-
----
-
-## Tech Stack
-
-- React
-- TypeScript
-- Vite
-- Redux Toolkit
-- React Redux
-- React Router
-- i18next / react-i18next
-- PapaParse
-- Vitest and React Testing Library (RTL)
-- ESLint
-- Prettier
-
----
-
-## Quickstart with Docker
-
-A `docker-compose.yaml` file is included in the project.
-
-If docker compose is configured for your environment, you can start it with:
-
-`docker compose up`
-
-The application will be available at:
-
-> http://localhost:8080
-
-If you make changes to the Docker setup, rebuild the container with:
-
-`bash docker compose up --build`
+    - rows to delete from the target system
+- Preview generated CSV output in the browser
+- Download generated result CSV files
+- Configurable source and target display names/icons
+- English and German localization
+- Fully client-side processing
+- Built with React, TypeScript, Redux Toolkit, Vite, and PapaParse
+- Tested with Vitest and React Testing Library
+- Linted with ESLint and formatted with Prettier
 
 ---
 
 ## How It Works
 
 1. The user selects one CSV file from the source system and one from the target system.
-2. The app validates both files against the configured CSV template/mapping.
-3. The source data is transformed into the target structure.
-4. The app compares both datasets using the configured primary key.
-5. Two result files are generated:
-    - insertions: records present in the source but missing in the target
-    - deletions: records present in the target but missing in the source
-6. The user can download both generated CSV files.
+2. The application reads the headers from both files.
+3. The user selects, uploads, or creates a CSV template.
+4. The template defines:
+    - how source columns map to target columns
+    - which columns form the primary key
+5. The application validates the selected files and template.
+6. Source data is transformed into the target CSV structure.
+7. Source and target records are compared by the configured primary key.
+8. Two CSV result sets are generated:
+    - **insertions**: records that exist in the source data but not in the target data
+    - **deletions**: records that exist in the target data but not in the source data
+9. The user can preview and download both generated result files.
 
 ---
 
@@ -82,68 +61,57 @@ If you make changes to the Docker setup, rebuild the container with:
 
 ### Initial screen: no files selected
 
-When the application is opened, two upload areas are shown side by side: one for a CSV file in source system format (left) and one for a CSV file in target system format (right). At this point, no files have been selected yet, so the evaluation action is hidden until both required inputs are available.
+When the application is opened, two upload areas are shown side by side. One area is used for the source-system CSV file, and the other is used for the target-system CSV file.
 
 ![](./screenshots/01_no_files_selected.png)
 
-### Ready for evaluation: both files have been selected
+### Both files selected
 
-After selecting both CSV files, the application displays the chosen file names for the source and target systems. Once both inputs are present, the evaluation button becomes visible and allows the user to continue with the comparison process.
+After both files have been selected, the application displays the chosen file names and allows the user to continue to the next step.
 
 ![](./screenshots/02_files_selected.png)
 
-### Evaluation result: generated output files
+### Template selection or creation
 
-After the files have been processed, the application shows the generated CSV output previews. The top result contains rows that should be inserted into the target system, while the bottom result contains rows that should be removed from it. Each result can be downloaded as a separate CSV file using the corresponding download button.
+The user can select a predefined template, upload a custom template, or manually create a new template from the detected CSV headers.
 
-![](./screenshots/03_files_processed.png)
+![](./screenshots/03_template_selection_or_creation.png)
+
+### Evaluation result
+
+After processing, the application displays generated CSV previews for insertions and deletions. Each result can be downloaded separately.
+
+![](./screenshots/04_data_evaluation.png)
 
 ---
 
 ## CSV Input Requirements
 
-The uploaded files should be valid CSV files.
+The uploaded files must be valid CSV files.
 
-The app expects that:
+The application expects that:
 
 - both files contain a header row
-- the required columns from the configured mapping are present
+- the source CSV contains all source columns required by the selected template
+- the target CSV contains all target columns required by the selected template
 - the configured primary key columns exist
-- rows can be uniquely compared using the configured primary key
+- primary key values can be used to identify comparable records
+- the selected template matches the structure of the uploaded files
 
-Unsupported or mismatching files may result in a parsing or validation error.
-
----
-
-## Deployment of the pre-build files
-
-This application is a static frontend application. After building the project, the generated `dist/` directory contains all files required to run the app in a browser.
-
-You can deploy the application without installing Node.js or running a build step by copying the contents of `dist/` to any static web server, for example:
-
-- Nginx
-- Apache HTTP Server
-- ...
-- any basic web hosting provider that can serve static files
-
-The web server only needs to serve the files as static assets. No backend service is required for the normal CSV comparison workflow.
-
-If you make changes to the source code, rebuild the application before deploying (refer to '[Building the Application](#building-the-application)' section).
-
-Then upload the updated contents of the `dist/` directory to your web server.
+If the files or template do not match, the application may show a validation or parsing error.
 
 ---
 
-## Configuration
+## Template Configuration
 
-### CSV Template Configuration
+CSV Compare uses JSON templates to describe how the source and target CSV files relate to each other.
 
-The CSV comparison is based on a template that defines:
+A template defines:
 
-- how source columns map to target columns
-- which columns form the primary key
+- the source-to-target column mapping
+- the primary key mapping used to identify matching records
 
-Basic Structure:
+### Basic Template Structure
 
 ```json
 {
@@ -151,25 +119,26 @@ Basic Structure:
         { "target": "value", "source": "value" },
         { "target": "value", "source": "value" }
     ],
-    "primary_key": [
-        { "target": "value", "source": "value" }
-    ]
+    "primary_key": [{ "target": "value", "source": "value" }]
 }
 ```
 
 The most important aspect is that the header line from the target system determines the structure of the CSV template.
 
 > Example:
+>
 > ```text
 > Header from source system CSV:
 >
->> UserName,LastName,FirstName,Email,PhoneNumber
+> > UserName,LastName,FirstName,Email,PhoneNumber
 > ```
+>
 > ```text
 > Header from target system CSV:
 >
->> FirstName,Surname,EmailAddress,Department
+> > FirstName,Surname,EmailAddress,Department
 > ```
+>
 > Resulting CSV Template (using Surname/LastName and FirstName as a compound primary key):
 >
 > ```json
@@ -178,90 +147,122 @@ The most important aspect is that the header line from the target system determi
 >         { "target": "FirstName", "source": "FirstName" },
 >         { "target": "Surname", "source": "LastName" },
 >         { "target": "EmailAddress", "source": "Email" },
->         { "target": "Department", "source": "" },
->         { "target": "", "source": "PhoneNumber" }
+>         { "target": "Department", "source": "" }
 >     ],
 >     "primary_key": [
->         { "target": "Surname", "source": "LastName" },
->         { "target": "FirstName", "source": "FirstName" }
+>         { "target": "FirstName", "source": "FirstName" },
+>         { "target": "Surname", "source": "LastName" }
 >     ]
 > }
 > ```
 
-A mapping entry with an empty `source` or `target` (e.g. `PhoneNumber` and `Department` in the above example) can be used to describe columns that only exist on one side.
+In this example:
 
-The primary key mapping tells the application which source and target columns identify the same logical record.
+- `FirstName` maps directly to `FirstName`
+- `LastName` from the source system maps to `Surname` in the target system
+- `Email` from the source system maps to `EmailAddress` in the target system
+- `Department` exists in the target structure but has no matching source column
+- `Surname`/`LastName` and `FirstName` form a compound primary key
 
-This configuration can be changed in the production environment **without a rebuild**.
+### Empty Mapping Values
 
-<br>
+A mapping entry may contain an empty `source` value (e.g., Department in the above example) to indicate that the column exists in the target system but not in the source system..
 
-### Source and Target Display Configuration
+During result generation, missing mapped values are represented as empty CSV fields to fulfill the target CSV structure.
 
-The source and target labels/icons are configured in: `src/config/config.json`
+### Primary Keys
 
-Example:
+The `primary_key` section tells the application which columns identify the same logical record in both files.
+
+A primary key can contain one or multiple column mappings. An empty 'source' value is not allowed in primary key mappings!
+
+## Predefined Templates
+
+Predefined templates are loaded from the public assets.
+
+The template registry is located at:
+
+```text
+/public/templates.json
+```
+
+Each entry defines:
+
+- `name`: the display name shown in the template selector dropdown
+- `path`: the public path to the template JSON file
+
+```json
+{
+    "templates": [
+        { "name": "Custom Template", "path": "/templates/custom.json" }
+    ]
+}
+```
+
+Template files are stored in:
+
+```text
+/public/templates
+```
+
+Because these files are served as static assets, predefined templates can be changed in a deployed environment without rebuilding the TypeScript application, as long as the public files on the server are updated.
+
+---
+
+## Source and Target Display Configuration
+
+The display names and icons for the compared systems are configured in:
+
+```text
+src/config/config.json
+```
+
+The default configuration for syncing a database with a cloud service looks like this:
 
 ```json
 {
     "source": {
         "name": "Database",
-        "icon": "/src/assets/database.svg"
+        "icon": "/img/database.svg"
     },
     "target": {
         "name": "Cloud",
-        "icon": "/src/assets/cloud.svg"
+        "icon": "/img/cloud.svg"
     }
 }
 ```
 
-These values are used in the UI to describe the two compared systems.
+The UI uses these values to label the two compared systems.
 
-Changing this configuration **requires a rebuild** of the application.
+Changing `src/config/config.json` requires rebuilding the application.
 
 ---
 
-## Project Structure
+## Running with Docker
 
+A `docker-compose.yaml` file is included.
+
+Start the application with:
+
+```bash
+docker-compose up
 ```
-csv_compare/
-  ├── public/
-  ├── src/
-  │ ├── assets/
-  │ ├── components/
-  │ │ └── FileDropArea.tsx
-  │ ├── config/
-  │ │ ├── locales/
-  │ │ │ ├── de/
-  │ │ │ └── en/
-  │ │ ├── config.json
-  │ │ └── i18n.ts
-  │ ├── pages/
-  │ │ ├── DataSourceScreen.tsx
-  │ │ └── DataSynchronizationScreen.tsx
-  │ ├── redux/
-  │ ├── utilities/
-  │ │ ├── CsvParser.ts
-  │ │ ├── CsvUtility.ts
-  │ │ ├── FileDownloadProvider.ts
-  │ │ └── InputDataValidator.ts
-  │ ├── App.tsx
-  │ └── main.tsx
-  ├── test/
-  │ ├── components/
-  │ ├── pages/
-  │ ├── utilities/
-  │ └── setup.ts
-  ├── docker-compose.yaml
-  ├── eslint.config.js
-  ├── package.json
-  ├── tsconfig.json
-  └── vite.config.ts
+
+The application will be available at:
+
+```text
+http://localhost:8080
+```
+
+If you changed the Docker setup, rebuild the container with:
+
+```bash
+docker-compose up --build
 ```
 
 ---
 
-## Building the Application
+## Local Development
 
 ### Requirements
 
@@ -270,75 +271,170 @@ csv_compare/
 
 This project uses npm as its package manager.
 
-<br>
+### 1. Clone the Repository
 
-### Getting Started
+```bash
+git clone https://github.com/markus-grosshaeuser/csv-compare.git
+cd csv-compare
+```
 
-#### 1. Clone the Repository
+### 2. Install Dependencies
 
-`git clone https://github.com/markus-grosshaeuser/csv-compare.git`
+```bash
+npm install
+```
 
-`cd csv-compare`
+### 3. Start the Development Server
 
-#### 2. Install Dependencies
+```bash
+npm run dev
+```
 
-`npm install`
+The application will be available at the local Vite development URL shown in the terminal, usually:
 
-#### 3. Start the Development Server
-
-`npm run dev`
-
-The application will be available at the local Vite development URL shown in your terminal, usually:
-
-> http://localhost:5173
-
-<br>
-
-### Available Scripts
-
-- Start Development Server
-    - `npm run dev` Starts the Vite development server with hot module replacement.
-- Build for Production
-    - `npm run build` Runs the TypeScript build and creates a production build with Vite.
-- Preview Production Build
-    - `npm run preview` Serves the production build locally for verification.
-- Run Tests
-    - `npm test` Runs the Vitest test suite.
-- Run Linting
-    - `npm run lint` Runs ESLint for the project.
-
-<br>
-
-### Testing
-
-The project uses:
-
-- Vitest as the test runner
-- React Testing Library for React component tests
-- jest-dom matchers for DOM assertions
-- jsdom as the browser-like test environment
-
-Tests are located in the `test/` directory and cover:
-
-- CSV parsing and comparison utilities
-- input validation utilities
-- file drop behavior
-- data source selection flow
-- synchronization result rendering and download behavior
-
-Run all tests with:
-
-`npm run test`
+```text
+http://localhost:5173/
+```
 
 ---
+
+## Available Scripts
+
+### Start Development Server
+
+```bash
+npm run dev
+```
+
+Starts the Vite development server with hot module replacement.
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+Runs the TypeScript build and creates a production build with Vite.
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+Serves the production build locally for verification.
+
+### Run Tests
+
+```bash
+npm run test
+```
+
+Runs the Vitest test suite.
+
+### Run Linting
+
+```bash
+npm run lint
+```
+
+Runs ESLint for the project.
+
+---
+
+## Building and Deployment
+
+CSV Compare is a static frontend application.
+
+Create a production build with:
+
+```bash
+npm run build
+```
+
+The generated files are written to:
+
+```text
+dist/
+```
+
+The contents of the `dist/` directory can be deployed to any static web server, for example:
+
+- Nginx
+- Apache HTTP Server
+- a static hosting provider
+- an object-storage based static website
+- any server capable of serving static files
+
+No backend service is required for the normal CSV comparison workflow.
+
+If source files are changed, rebuild the application before deploying the updated `dist/` contents.
+
+---
+
+## Project Structure
+
+```
+csv-compare/
+  ├── public/
+  │ ├── img/
+  │ ├── templates/
+  │ └── templates.json
+  ├── screenshots/
+  ├── src/
+  │ ├── assets/
+  │ ├── components/
+  │ │ ├── DataSourceCard.tsx
+  │ │ ├── FileDropArea.tsx
+  │ │ ├── MultiScreenNavigationButton.tsx
+  │ │ ├── ResultDisplay.tsx
+  │ │ ├── TemplateCreationCard.tsx
+  │ │ ├── TemplateSelectionCard.tsx
+  │ │ └── TemplateSelector.tsx
+  │ ├── config/
+  │ │ ├── locales/
+  │ │ ├── config.json
+  │ │ └── i18n.ts
+  │ ├── pages/
+  │ │ ├── DataEvaluationScreen.tsx
+  │ │ ├── DataSourceScreen.tsx
+  │ │ └── DataSynchronizationScreen.tsx
+  │ ├── redux/
+  │ │ ├── csvHeaderSlice.ts
+  │ │ ├── fileSlice.ts
+  │ │ ├── store.ts
+  │ │ └── templateSlice.ts
+  │ ├── utilities/
+  │ │ ├── CsvParser.ts
+  │ │ ├── CsvUtility.ts
+  │ │ ├── FileDownloadProvider.ts
+  │ │ ├── InputDataValidator.ts
+  │ │ ├── TemplateEstimator.ts
+  │ │ └── TemplateLoader.ts
+  │ ├── App.tsx
+  │ └── main.tsx
+  ├── test/
+  │ ├── components/
+  │ ├── pages/
+  │ ├── redux/
+  │ ├── utilities/
+  │ ├── MockServer.ts
+  │ ├── RenderWIthProvider.tsx
+  │ └── setup.ts
+  ├── docker-compose.yaml
+  ├── eslint.config.js
+  ├── package.json
+  ├── tsconfig.json
+  └── vite.config.ts
+```
 
 ## Internationalization
 
 The application uses `i18next` and `react-i18next`.
 
-Translation files and the i18n.ts configuration file are stored in:
+Translation files are stored in:
 
-```
+```text
 src/config/
   ├── i18n.ts
   └── locales/
@@ -348,28 +444,90 @@ src/config/
       └── translation.json
 ```
 
-The current setup includes English and German translations.
+The i18n setup is located at:
 
-`I18nextBrowserLanguageDetector` is used to automatically detect the user's preferred language from the browser settings.
+```text
+src/config/i18n.ts
+```
+
+The current setup includes:
+
+- English
+- German
+
+Browser language detection is handled by `i18next-browser-languagedetector`.
+
+---
+
+## Testing
+
+The project uses:
+
+- Vitest as the test runner
+- React Testing Library for React component tests
+- jest-dom matchers for DOM assertions
+- jsdom as the browser-like test environment
+- MSW for mocked network behavior where needed
+
+Tests are located in the `test/` directory and cover application behavior such as:
+
+- CSV parsing
+- CSV comparison utilities
+- template loading and selection
+- input validation
+- Redux state handling
+- file download behavior
+- page and component rendering
+- synchronization result generation
+
+Run all tests with:
+
+```bash
+npm run test
+```
+
+---
+
+## Tech Stack
+
+- React 19
+- TypeScript 6
+- Vite 8
+- Redux Toolkit
+- React Redux
+- React Router
+- i18next
+- react-i18next
+- i18next-browser-languagedetector
+- PapaParse
+- Axios
+- Vitest
+- React Testing Library
+- jsdom
+- MSW
+- ESLint
+- Prettier
 
 ---
 
 ## Browser Behavior
 
-CSV files are loaded in the browser using object URLs. When a file is replaced, the previous object URL is revoked to avoid unnecessary memory usage.
+CSV files are parsed directly in the browser.
 
-The generated insertion and deletion files are downloaded directly from the browser.
+Generated synchronization files are created as browser-side CSV downloads. The application creates temporary object URLs for generated files and revokes them after the download has been triggered.
 
 ---
 
 ## Development Notes
 
-- The application is client-side and does not require a backend for normal CSV comparison.
+- The application is fully client-side.
 - CSV parsing is handled with PapaParse.
 - Application state is managed with Redux Toolkit.
 - Routing is handled with React Router.
-- Styling is done with CSS modules and shared theme variables.
-- The project is intended to be type-safe and testable.
+- Styling uses CSS modules and shared theme styles.
+- Templates can be selected, uploaded, or manually created.
+- The production build can be hosted as static files.
+- Normal CSV comparison does not require a server-side component.
 
 ---
 

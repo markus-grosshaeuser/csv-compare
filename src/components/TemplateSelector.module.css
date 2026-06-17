@@ -1,0 +1,11 @@
+@import '../theme.css';
+
+.templateSelect {
+    min-width: 250px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    padding: 5px 10px;
+    background-color: var(--page-background);
+    border: none;
+    border-radius: var(--border-radius);
+}

@@ -30,26 +30,3 @@ h2 {
 h2 b {
     color: var(--accent);
 }
-
-.tooltip {
-    position: relative;
-    display: inline-block;
-}
-
-.tooltipText {
-    width: 150px;
-    background-color: var(--accent-light);
-    color: #111;
-    opacity: 0;
-    text-align: center;
-    padding: 5px;
-    border-radius: 5px;
-    position: absolute;
-    margin: -30px -200px;
-    z-index: 1;
-}
-
-.tooltip:hover .tooltipText {
-    opacity: 1;
-    transition: 0.25s ease-in-out;
-}

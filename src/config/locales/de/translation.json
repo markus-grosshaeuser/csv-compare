@@ -1,18 +1,28 @@
 {
     "data_source": "Datenquelle",
+    "source_system": "Quellsystem",
+    "target_system": "Zielsystem",
     "no_file_selected": "Keine Datei ausgewählt",
     "file": "Datei:",
     "put_data_file_here": "Datei für den Upload hier ablegen oder klicken für Dateiauswahldialog",
 
     "insertion_filename": "neu_anzulegende_datensaetze.csv",
     "deletion_filename": "zu_entfernende_datensaetze.csv",
+    "template_filename": "template.json",
 
     "insert_into": "Neu einfügen in {{targetName}}:",
     "remove_from": "Entfernen aus {{targetName}}:",
     "download_as_csv": "Als CSV-Datei herunterladen",
+    "download_template": "Template herunterladen",
 
     "error_fetching_data": "Fehler beim Parsen der Dateien. Überprüfen Sie die Konsistenz von Dateien und Template.",
     "loading_data": "Daten werden geladen...",
 
-    "continue_to_evaluation": "Weiter zur Auswertung"
+    "continue_to_evaluation": "Weiter zur Auswertung",
+    "return_to_previous_screen": "Zurück zur vorherigen Seite",
+
+    "choose_template": "Template auswählen",
+    "compose_template": "Template erstellen",
+
+    "no_matching_template_found": "Kein passendes Template gefunden"
 }

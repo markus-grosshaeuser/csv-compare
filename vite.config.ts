@@ -11,7 +11,14 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
             enabled: true,
-            exclude: ['**/node_modules/**', '**/dist/**', '**/test/**'],
+            exclude: [
+                '**/node_modules/**',
+                '**/dist/**',
+                '**/test/**',
+                '**/public/**',
+                '**/src/assets/**',
+                '**/src/config/**',
+            ],
         },
     },
 } as UserConfig)

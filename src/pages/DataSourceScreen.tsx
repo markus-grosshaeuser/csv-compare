@@ -1,35 +1,33 @@
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import FileDropArea from '../components/FileDropArea.tsx'
 import { type FileDispatch, type RootState } from '../redux/store.ts'
-import { setDestinationFile, setSourceFile } from '../redux/fileSlice.ts'
+import { setTargetFile, setSourceFile } from '../redux/fileSlice.ts'
 import startIcon from '../assets/start.svg'
 import Style from './DataSourceScreen.module.css'
 import Config from '../config/config.json'
+import MultiScreenNavigationButton from '../components/MultiScreenNavigationButton.tsx'
+import DataSourceCard from '../components/DataSourceCard.tsx'
 
 export default function DataSourceScreen() {
     const sourceFile = useSelector(
         (state: RootState) => state.file.value.source,
     )
-    const destinationFile = useSelector(
-        (state: RootState) => state.file.value.destination,
+    const targetFile = useSelector(
+        (state: RootState) => state.file.value.target,
     )
 
     const navigate = useNavigate()
     const dispatch = useDispatch<FileDispatch>()
     const { t } = useTranslation()
 
-    function onButtonClick() {
-        if (sourceFile.name && destinationFile.name) {
-            navigate('/evaluation')
-        }
+    const csvFileFormat = {
+        suffix: '.csv',
+        mimeTypes: ['text/csv', 'application/vnd.ms-excel'],
     }
 
     function setSource(file: File) {
-        if (sourceFile.objectUrl) {
-            URL.revokeObjectURL(sourceFile.objectUrl)
-        }
+        URL.revokeObjectURL(sourceFile.objectUrl)
         dispatch(
             setSourceFile({
                 name: file.name,
@@ -38,76 +36,55 @@ export default function DataSourceScreen() {
         )
     }
 
-    function setDestination(file: File) {
-        if (destinationFile.objectUrl) {
-            URL.revokeObjectURL(destinationFile.objectUrl)
-        }
+    function setTarget(file: File) {
+        URL.revokeObjectURL(targetFile.objectUrl)
         dispatch(
-            setDestinationFile({
+            setTargetFile({
                 name: file.name,
                 objectUrl: URL.createObjectURL(file),
             }),
         )
     }
 
+    function onButtonClick() {
+        if (sourceFile.name && targetFile.name) {
+            navigate('/sync')
+        }
+    }
+
     return (
         <div className={Style.dataSourceScreen}>
-            <div className={Style.symmetricButtonBalancer}></div>
+            <MultiScreenNavigationButton
+                imageUrl={''}
+                onClickCallback={() => {}}
+                ariaLabel={''}
+                testId={'button_placeholder'}
+                disabled={true}
+            />
 
-            <div className={Style.dataSourceCard}>
-                <h2>
-                    {t('data_source')}: <b>{Config.source.name}</b>
-                </h2>
-                <p>
-                    {sourceFile.name
-                        ? t('file') + ' ' + sourceFile.name
-                        : t('no_file_selected')}
-                </p>
-                <FileDropArea fileEntry={sourceFile} setter={setSource}>
-                    <img alt="" src={Config.source.icon} aria-hidden="true" />
-                </FileDropArea>
-                <p>{t('put_data_file_here')}</p>
-            </div>
+            <DataSourceCard
+                titleTranslationKey={'source_system'}
+                config={Config.source}
+                file={sourceFile}
+                setter={setSource}
+                fileFormats={[csvFileFormat]}
+            />
 
-            <div className={Style.dataSourceCard}>
-                <h2>
-                    {t('data_source')}: <b>{Config.target.name}</b>
-                </h2>
-                <p>
-                    {destinationFile.name
-                        ? t('file') + ' ' + destinationFile.name
-                        : t('no_file_selected')}
-                </p>
-                <FileDropArea
-                    fileEntry={destinationFile}
-                    setter={setDestination}
-                >
-                    <img alt="" src={Config.target.icon} aria-hidden="true" />
-                </FileDropArea>
-                <p>{t('put_data_file_here')}</p>
-            </div>
+            <DataSourceCard
+                titleTranslationKey={'target_system'}
+                config={Config.target}
+                file={targetFile}
+                setter={setTarget}
+                fileFormats={[csvFileFormat]}
+            />
 
-            <div
-                role="button"
-                data-testid="evaluation_button"
-                hidden={!(sourceFile.name && destinationFile.name)}
-                className={
-                    (sourceFile.name && destinationFile.name
-                        ? Style.buttonEnabled
-                        : Style.buttonDisabled) +
-                    ' ' +
-                    Style.button
-                }
-                aria-label={t('continue_to_evaluation')}
-                onClick={onButtonClick}
-            >
-                <img
-                    alt=""
-                    src={startIcon}
-                    aria-hidden="true"
-                    hidden={!(sourceFile.name && destinationFile.name)}
-                />
-            </div>
+            <MultiScreenNavigationButton
+                imageUrl={startIcon}
+                onClickCallback={onButtonClick}
+                ariaLabel={t('continue_to_evaluation')}
+                testId={'start_button'}
+                disabled={!(sourceFile.name && targetFile.name)}
+            />
         </div>
     )
 }

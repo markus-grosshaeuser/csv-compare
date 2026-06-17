@@ -2,90 +2,18 @@
 
 .dataSynchronizationScreen {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-    width: 900px;
-    margin: 0;
-    background-color: var(--page-background);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    resize: horizontal;
-}
-
-.dataSynchronizationScreenList {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    margin: 10px;
-    padding: 0 10px;
-    background-color: var(--window);
-    border: 2px solid var(--inner-element-border);
-    border-radius: var(--border-radius);
-}
-
-.dataSynchronizationScreenList .header {
-    display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    justify-content: space-around;
+    min-width: 900px;
+    width: auto;
+    height: fit-content;
     margin: 0;
-    padding: 0;
-}
-
-.dataSynchronizationScreenList .header button {
-    background-color: var(--enabled-button-background);
-    border: 2px solid var(--enabled-button-border);
+    padding: 10px;
+    background-color: var(--page-background);
     border-radius: var(--border-radius);
 }
 
-.dataSynchronizationScreenList .header button:hover {
-    background-color: var(--enabled-button-hover);
-}
-
-.dataSynchronizationScreenList .header button:active {
-    background-color: var(--enabled-button-active);
-}
-
-.dataSynchronizationScreen textarea {
-    height: 180px;
-    width: 100%;
-    resize: none;
-    margin: 0 0 10px 0;
-    padding: 0;
-    font-family: var(--preferred-font), sans-serif;
-}
-
-/* Thanks to https://css-loaders.com */
-.loader {
-    width: 50px;
-    --b: 8px;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    padding: 1px;
-    background: conic-gradient(#0000 10%, #ec5103) content-box;
-    -webkit-mask:
-        repeating-conic-gradient(
-            #0000 0deg,
-            #000 1deg 20deg,
-            #0000 21deg 36deg
-        ),
-        radial-gradient(
-            farthest-side,
-            #0000 calc(100% - var(--b) - 1px),
-            #000 calc(100% - var(--b))
-        );
-    -webkit-mask-composite: destination-in;
-    mask-composite: intersect;
-    animation: l4 1s infinite steps(10);
-}
-@keyframes l4 {
-    to {
-        transform: rotate(1turn);
-    }
+.dataSynchronizationScreen .errorMessage {
+    position: absolute;
 }

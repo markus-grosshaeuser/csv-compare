@@ -12,6 +12,7 @@ export default i18n
             en: { translation: enTranslation },
             de: { translation: deTranslation },
         },
+        lng: 'en',
         fallbackLng: 'en',
         interpolation: {
             escapeValue: false,

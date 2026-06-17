@@ -1,84 +1,84 @@
 import Papa, { unparse } from 'papaparse'
 import {
-    applyReorderKeyToDataset,
+    applyReorderKey,
     createNumericPkIndices,
     createReorderKey,
-    filterMaps,
+    getInsertionsAndDeletions,
+    type MatchingColumnsTuple,
 } from './CsvUtility.ts'
-import {
-    type PrimaryKeyHeaderMappingTuple,
-    validateFilesUsingTemplate,
-} from './InputDataValidator.ts'
+import { checkFileHeadersAgainstTemplateHeaders } from './InputDataValidator.ts'
+import type { Template } from '../redux/templateSlice.ts'
 
 /**
- * Parses the given input files, processes their content based on their headers and primary key mappings,
- * and generates output data representing differences between them.
+ * Processes files by validating and comparing headers, then performing transformations
+ * to compute insertions and deletions based on the source and target file content.
  *
- * @param {string} sourceInFile - The path to the source input file to be parsed.
- * @param {string} destinationInFile - The path to the destination input file to be parsed.
- * @return {Promise<[string, string]>} A promise that resolves with an array where the first element is the parsed "insert" data
- * and the second element is the parsed "delete" data (both with respect to the destination).
+ * @param {Template} template - The template object containing header mapping and primary key definitions.
+ * @param {string[]} sourceHeader - The header row of the source file.
+ * @param {string} sourceInFile - The content of the source file.
+ * @param {string[]} targetHeader - The header row of the target file.
+ * @param {string} targetInFile - The content of the target file.
+ * @return {Promise<[string, string]>} A promise that resolves to a tuple containing two strings:
+ * the unparsed insertions for the target file and the unparsed deletions for the source file.
+ * @throws {Error} If the headers of the source or target files do not match the template headers.
  */
-export async function performParse(
+export async function processFiles(
+    template: Template,
+    sourceHeader: string[],
     sourceInFile: string,
-    destinationInFile: string,
+    targetHeader: string[],
+    targetInFile: string,
 ): Promise<[string, string]> {
-    const destinationHeader = await parseFileHeader(destinationInFile)
-    const sourceHeader = await parseFileHeader(sourceInFile)
+    if (
+        !checkFileHeadersAgainstTemplateHeaders(
+            template,
+            sourceHeader,
+            targetHeader,
+        )
+    ) {
+        throw new Error('File headers do not match template headers')
+    }
 
-    const validationResult: PrimaryKeyHeaderMappingTuple =
-        await validateFilesUsingTemplate(sourceHeader, destinationHeader)
-    const primaryKey = validationResult.primaryKey
-    const headerMapping = validationResult.headerMapping
-
-    const destinationPrimaryKey: string[] = []
-    primaryKey.forEach((_: string, destinationPK: string) => {
-        destinationPrimaryKey.push(destinationPK)
-    })
-    const destinationKey = createNumericPkIndices(
-        destinationPrimaryKey,
-        destinationHeader,
+    const { primaryKey, headerMapping } =
+        extractPrimaryKeyAndHeaderMapping(template)
+    const { sourceKey, targetKey } = createNumericPkIndices(
+        primaryKey,
+        sourceHeader,
+        targetHeader,
+    )
+    const reorderKey = createReorderKey(
+        headerMapping,
+        sourceHeader,
+        targetHeader,
     )
 
-    const sourcePrimaryKey: string[] = []
-    primaryKey.forEach((sourcePK: string) => {
-        sourcePrimaryKey.push(sourcePK)
-    })
-    const sourceKey = createNumericPkIndices(sourcePrimaryKey, sourceHeader)
+    const targetFileContent = await parseFileContent(targetKey, targetInFile)
+    const rawSourceFileContent = await parseFileContent(sourceKey, sourceInFile)
+    const sourceFileContent = applyReorderKey(reorderKey, rawSourceFileContent)
 
-    const reorderKey = createReorderKey(headerMapping, sourceHeader)
-
-    const destinationFileContent = await parseFileContent(
-        destinationKey,
-        destinationInFile,
+    const { insertions, deletions } = getInsertionsAndDeletions(
+        targetHeader,
+        sourceFileContent,
+        targetFileContent,
     )
-    const sourceFileContent = await parseFileContent(
-        sourceKey,
-        sourceInFile,
-        true,
-        reorderKey,
-    )
-
-    const ins = filterMaps(sourceFileContent, destinationFileContent)
-    const outs = filterMaps(destinationFileContent, sourceFileContent)
-
-    ins.unshift(destinationHeader)
-    outs.unshift(destinationHeader)
-
-    return [unparse(ins), unparse(outs)]
+    return [unparse(insertions), unparse(deletions)]
 }
 
 /**
- * Parses the header (first row) of a CSV file from the specified URL.
+ * Parses the header row of a file and returns it as an array of strings.
+ * The file is processed asynchronously and must be in a format compatible with PapaParse.
  *
- * @param {string} inFileURL - The URL of the CSV file to parse.
+ * @param {string} inFile - The path or URL of the file to be parsed. Must not be an empty string.
  * @return {Promise<string[]>} A promise that resolves to an array of strings representing the header row of the file.
- * If the file is empty or contains no rows, the promise resolves to an empty array.
- * If an error occurs during parsing, the promise rejects with an error.
+ *                              If the file contains no data, resolves to an empty array.
+ *                              Rejects with an error if parsing fails.
  */
-export async function parseFileHeader(inFileURL: string): Promise<string[]> {
+export async function parseFileHeader(inFile: string): Promise<string[]> {
+    if (inFile === '') {
+        throw new Error('No file provided')
+    }
     return new Promise((resolve, reject) => {
-        Papa.parse(inFileURL, {
+        Papa.parse(inFile, {
             download: true,
             header: false,
             worker: true,
@@ -98,58 +98,81 @@ export async function parseFileHeader(inFileURL: string): Promise<string[]> {
 }
 
 /**
- * Parses the content of a file from the given URL and organizes it into a map structure based on specific key indices.
+ * Parses the content of a file and returns it as a Map of primary keys to rows.
+ * The file is processed asynchronously and must be in a format compatible with PapaParse.
  *
- * @param {number[]} keyIndices - An array of indices that determines how the keys of the resulting map will be generated.
- * @param {string} inFileURL - The URL of the file to be parsed.
- * @param {boolean} [reorder=false] - A flag indicating whether the parsed content should be reordered based on the provided reorder keys.
- * @param {number[]} [reorderKey=[]] - An array of indices specifying the reorder pattern for the content if `reorder` is set to true.
- * @return {Promise<Map<string, string[]>>} A promise that resolves to a map where the keys are stringified arrays based
- * on the specified indices, and the values are arrays representing parsed rows.
+ * @param {number[]} numericPkIndices - An array of indices representing the primary key columns in the file.
+ * @param {string} inFile - The path or URL of the file to be parsed. Must not be an empty string.
+ * @return {Promise<Map<string, string[]>>} A promise that resolves to a Map where each key is a primary key
+ *                                           and each value is an array of strings representing a row of the file.
+ *                                           Rejects with an error if parsing fails.
+ * @throws {Error} If no primary key indices are provided or if the file contains no data.
  */
 export async function parseFileContent(
-    keyIndices: number[],
-    inFileURL: string,
-    reorder: boolean = false,
-    reorderKey: number[] = [],
+    numericPkIndices: number[],
+    inFile: string,
 ): Promise<Map<string, string[]>> {
-    if (keyIndices.length === 0) {
-        throw new Error('No key indices provided')
+    if (inFile === '') {
+        throw new Error('No file url provided')
     }
     return new Promise((resolve, reject) => {
-        Papa.parse(inFileURL, {
+        Papa.parse(inFile, {
             download: true,
             header: false,
             worker: true,
-            skipFirstNLines: 1,
             skipEmptyLines: true,
-            complete: function (results: Papa.ParseResult<string[]>) {
-                const dataset = new Map<string, string[]>()
-                results.data.forEach((result: string[]) => {
-                    const invalidKeys = keyIndices.find(
-                        (value) => value < 0 || value >= result.length,
+            skipFirstNLines: 1,
+            complete: function (result: Papa.ParseResult<string[]>) {
+                if (!(numericPkIndices.length > 0)) {
+                    reject(new Error('No primary key indices provided'))
+                    return
+                }
+                const content = new Map<string, string[]>()
+                result.data.forEach((row: string[]) => {
+                    const pk: string[] = numericPkIndices.map(
+                        (index) => row[index],
                     )
-                    if (invalidKeys !== undefined) {
-                        reject(
-                            new Error(
-                                `Out of bound access using key index ${invalidKeys} for result length ${result.length}`,
-                            ),
-                        )
-                        return
-                    }
-                    const key: string[] = keyIndices.map(
-                        (value) => result[value],
-                    )
-                    result = reorder
-                        ? applyReorderKeyToDataset(result, reorderKey)
-                        : result
-                    dataset.set(JSON.stringify(key), result)
+                    content.set(JSON.stringify(pk), row)
                 })
-                resolve(dataset)
+                resolve(content)
             },
             error: function () {
                 reject(new Error('Failed to parse file header'))
             },
         })
     })
+}
+
+/**
+ * Extracts primary key and header mappings from the provided template.
+ * Populates a mapping of primary keys and header mappings based on the
+ * target and source column information specified in the template.
+ *
+ * @param {Template} template - The template object containing primary key
+ * and column match information.
+ * @return {Object} An object with two properties:
+ * - `primaryKey`: A Map where the key is the target column name and the value
+ *   is the source column name, derived from the template's primary key mapping.
+ * - `headerMapping`: A Map where the key is the target column name and the value
+ *   is the source column name, derived from the template's column match mapping.
+ */
+export function extractPrimaryKeyAndHeaderMapping(template: Template): {
+    primaryKey: Map<string, string>
+    headerMapping: Map<string, string>
+} {
+    const primaryKeyMap: Map<string, string> = new Map<string, string>(
+        template.primary_key.map((column: MatchingColumnsTuple) => {
+            return [column.target, column.source]
+        }),
+    )
+    const headersMap: Map<string, string> = new Map<string, string>()
+    template.column_match.forEach((column: MatchingColumnsTuple) => {
+        if (column.target !== '' && column.source !== '') {
+            headersMap.set(column.target, column.source)
+        }
+    })
+    return {
+        primaryKey: primaryKeyMap,
+        headerMapping: headersMap,
+    }
 }

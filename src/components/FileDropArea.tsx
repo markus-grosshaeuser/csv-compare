@@ -1,25 +1,33 @@
 import {
     useRef,
     useState,
-    type MouseEvent,
-    type DragEvent,
     type ChangeEvent,
+    type DragEvent,
+    type KeyboardEvent,
+    type MouseEvent,
+    type ReactNode,
 } from 'react'
-import * as React from 'react'
-import Style from './FileDropArea.module.css'
-import type { FileEntry } from '../redux/fileSlice.ts'
 import { useTranslation } from 'react-i18next'
+import type { FileEntry } from '../redux/fileSlice.ts'
+import Style from './FileDropArea.module.css'
+
+export type FileFormat = {
+    suffix: string
+    mimeTypes: string[]
+}
 
 type FileDropAreaProps = {
-    children?: React.ReactNode | null
+    children?: ReactNode | null
     fileEntry: FileEntry
-    setter: (file: File) => void
+    onFileSelectedCallback: (file: File) => void
+    supportedFileFormats: FileFormat[]
 }
 
 export default function FileDropArea({
     children,
     fileEntry,
-    setter,
+    onFileSelectedCallback,
+    supportedFileFormats,
 }: FileDropAreaProps) {
     const fileURL: string = fileEntry.objectUrl
 
@@ -38,7 +46,7 @@ export default function FileDropArea({
         e: ChangeEvent<HTMLInputElement, HTMLInputElement>,
     ) {
         if (e.target.files !== null && e.target.files.length > 0) {
-            setter(e.target.files[0])
+            onFileSelectedCallback(e.target.files[0])
         }
     }
 
@@ -60,11 +68,15 @@ export default function FileDropArea({
             return
         }
         if (
-            file.name.toLowerCase().endsWith('.csv') ||
-            file.type === 'text/csv' ||
-            file.type === 'application/vnd.ms-excel'
+            supportedFileFormats.some(
+                (format) =>
+                    file.name
+                        .toLowerCase()
+                        .endsWith(format.suffix.toLowerCase()) ||
+                    format.mimeTypes.includes(file.type),
+            )
         ) {
-            setter(file)
+            onFileSelectedCallback(file)
         } else {
             alert('Invalid file type. Please select a CSV file.')
         }
@@ -74,7 +86,7 @@ export default function FileDropArea({
         setIsDragging(false)
     }
 
-    function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             inputRef.current?.click()
@@ -84,11 +96,11 @@ export default function FileDropArea({
     return (
         <div
             className={
-                Style.FileDropArea +
+                Style.fileDropArea +
                 ' ' +
-                (fileURL ? Style.FileDropAreaFull : Style.FileDropAreaEmpty) +
+                (fileURL ? Style.fileDropAreaFull : Style.fileDropAreaEmpty) +
                 ' ' +
-                (isDragging ? Style.FileDropAreaDragging : '')
+                (isDragging ? Style.fileDropAreaDragging : '')
             }
             data-state={isDragging ? 'dragging' : fileURL ? 'full' : 'empty'}
             onClick={(e) => handleClick(e)}
@@ -108,7 +120,9 @@ export default function FileDropArea({
             <input
                 hidden
                 type="file"
-                accept=".csv"
+                accept={supportedFileFormats
+                    .map((format) => format.mimeTypes)
+                    .join(',')}
                 ref={inputRef}
                 onChange={(e) => handleFileChange(e)}
             />

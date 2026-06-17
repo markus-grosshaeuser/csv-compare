@@ -1,0 +1,16 @@
+@import '../theme.css';
+
+.dataEvaluationScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    min-width: 900px;
+    width: auto;
+    overflow: hidden;
+    resize: horizontal;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--page-background);
+    border-radius: var(--border-radius);
+}

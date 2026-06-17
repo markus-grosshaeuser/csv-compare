@@ -1,24 +1,60 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { useTranslation } from 'react-i18next'
-import { type RootState } from '../redux/store.ts'
-import { provideFileDownload } from '../utilities/FileDownloadProvider.ts'
-import DownloadIcon from '../assets/download.svg'
 import Style from './DataSynchronizationScreen.module.css'
-import Config from '../config/config.json'
-import { performParse } from '../utilities/CsvParser.ts'
+import { useDispatch, useSelector } from 'react-redux'
+import type {
+    CsvHeaderDispatch,
+    RootState,
+    TemplateDispatch,
+} from '../redux/store.ts'
+import * as React from 'react'
+import { useEffect, useState } from 'react'
+import { parseFileHeader } from '../utilities/CsvParser.ts'
+import arrowLeft from '../assets/arrow_left.svg'
+import arrowRight from '../assets/arrow_right.svg'
+import { useNavigate } from 'react-router-dom'
+import { setTemplate, type Template } from '../redux/templateSlice.ts'
+import {
+    findMatchingTemplates,
+    loadTemplateFromFile,
+    loadTemplateFromURL,
+    type TemplateInfo,
+    verifyTemplateFileDataFormat,
+} from '../utilities/TemplateLoader.ts'
+import type { MatchingColumnsTuple } from '../utilities/CsvUtility.ts'
+import { useTranslation } from 'react-i18next'
+import TemplateSelectionCard from '../components/TemplateSelectionCard.tsx'
+import TemplateCreationCard from '../components/TemplateCreationCard.tsx'
+import estimateTemplate from '../utilities/TemplateEstimator.ts'
+import {
+    type HeaderState,
+    setSourceHeader,
+    setTargetHeader,
+} from '../redux/csvHeaderSlice.ts'
+import type { FileState } from '../redux/fileSlice.ts'
+import MultiScreenNavigationButton from '../components/MultiScreenNavigationButton.tsx'
 
 export default function DataSynchronizationScreen() {
-    const sourceFileURL: string = useSelector(
-        (state: RootState) => state.file.value.source.objectUrl,
+    const inputFiles: FileState = useSelector(
+        (state: RootState) => state.file.value,
     )
-    const destinationFileURL: string = useSelector(
-        (state: RootState) => state.file.value.destination.objectUrl,
+    const header: HeaderState = useSelector(
+        (state: RootState) => state.csvHeader.value,
     )
 
-    const [insertions, setInsertions] = useState<string>('')
-    const [deletions, setDeletions] = useState<string>('')
+    const [templatePrimaryKey, setTemplatePrimaryKey] = useState<
+        Map<string, string>
+    >(new Map())
+    const [templateMapping, setTemplateMapping] = useState<Map<string, string>>(
+        new Map(),
+    )
+
+    const [predefinedTemplates, setPredefinedTemplates] = useState<
+        TemplateInfo[]
+    >([])
+    const [selectedPredefinedTemplate, setSelectedPredefinedTemplate] =
+        useState<TemplateInfo | null>(null)
+
+    const templateDispatch = useDispatch<TemplateDispatch>()
+    const headerDispatch = useDispatch<CsvHeaderDispatch>()
 
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [errorMessages, setErrorMessages] = useState<string | null>(null)
@@ -27,65 +63,226 @@ export default function DataSynchronizationScreen() {
 
     const { t } = useTranslation()
 
-    const targetName = Config.target.name
-
     useEffect(() => {
-        async function fetchData() {
-            setErrorMessages(null)
-            setInsertions('')
-            setDeletions('')
+        async function initializeTemplateMapping() {
             setIsLoading(true)
-            const [ins, outs] = await performParse(
-                sourceFileURL,
-                destinationFileURL,
+            setErrorMessages(null)
+            const { sourceSystemHeader, targetSystemHeader } =
+                await fetchHeaders(inputFiles)
+            const sortedMatchingTemplates = await fetchMatchingTemplates(
+                sourceSystemHeader,
+                targetSystemHeader,
             )
-            setInsertions(ins)
-            setDeletions(outs)
+
+            headerDispatch(setSourceHeader(sourceSystemHeader))
+            headerDispatch(setTargetHeader(targetSystemHeader))
+            setPredefinedTemplates(sortedMatchingTemplates)
+
+            const firstTemplate = sortedMatchingTemplates[0] ?? null
+            setSelectedPredefinedTemplate(firstTemplate)
+
+            const template = await fetchTemplateDefault(
+                firstTemplate,
+                sourceSystemHeader,
+                targetSystemHeader,
+            )
+            if (template) {
+                applyTemplate(template)
+                templateDispatch(setTemplate(template))
+            }
             setIsLoading(false)
         }
 
-        if (sourceFileURL && destinationFileURL) {
-            fetchData().catch(() => {
-                setIsLoading(false)
-                setInsertions('')
-                setDeletions('')
+        if (inputFiles.source.objectUrl && inputFiles.target.objectUrl) {
+            initializeTemplateMapping().catch(() => {
                 setErrorMessages(t('error_fetching_data'))
+                setIsLoading(false)
             })
         } else {
             navigation('/')
         }
-    }, [sourceFileURL, destinationFileURL, navigation, t])
+    }, [inputFiles, navigation, headerDispatch, templateDispatch, t])
 
-    function provideFile(content: string, fileName: string): void {
-        provideFileDownload(content, t(fileName))
+    async function fetchHeaders(inputFiles: FileState) {
+        const sourceSystemHeader = await parseFileHeader(
+            inputFiles.source.objectUrl,
+        )
+        const targetSystemHeader = await parseFileHeader(
+            inputFiles.target.objectUrl,
+        )
+        return {
+            sourceSystemHeader,
+            targetSystemHeader,
+        }
+    }
+
+    async function fetchMatchingTemplates(
+        sourceSystemHeader: string[],
+        targetSystemHeader: string[],
+    ) {
+        const matchingTemplates = await findMatchingTemplates(
+            sourceSystemHeader,
+            targetSystemHeader,
+        )
+        return matchingTemplates.sort((a, b) => a.name.localeCompare(b.name))
+    }
+
+    async function fetchTemplateDefault(
+        firstTemplate: TemplateInfo,
+        sourceSystemHeader: string[],
+        targetSystemHeader: string[],
+    ) {
+        if (firstTemplate) {
+            const templateFromURL = await loadTemplateFromURL(
+                firstTemplate.path,
+            )
+            if (verifyTemplateFileDataFormat(templateFromURL)) {
+                return templateFromURL
+            }
+        } else {
+            return estimateTemplate(sourceSystemHeader, targetSystemHeader)
+        }
+    }
+
+    function buildTemplateFromState(): Template {
+        const columnMatch: MatchingColumnsTuple[] = header.targetHeader.map(
+            (target) => ({
+                target,
+                source: templateMapping.get(target) ?? '',
+            }),
+        )
+
+        const primaryKey: MatchingColumnsTuple[] = Array.from(
+            templatePrimaryKey.entries(),
+        ).map(([target, source]) => ({
+            target,
+            source,
+        }))
+
+        return {
+            column_match: columnMatch,
+            primary_key: primaryKey,
+        }
+    }
+
+    function applyTemplate(templateFileData: {
+        primary_key: MatchingColumnsTuple[]
+        column_match: MatchingColumnsTuple[]
+    }) {
+        setTemplatePrimaryKey(
+            new Map(
+                templateFileData.primary_key.map(
+                    ({ source, target }: MatchingColumnsTuple) => {
+                        return [target, source]
+                    },
+                ),
+            ),
+        )
+
+        setTemplateMapping(
+            new Map(
+                templateFileData.column_match
+                    .filter(({ target }: MatchingColumnsTuple) => target !== '')
+                    .map(({ source, target }: MatchingColumnsTuple) => {
+                        return [target, source]
+                    }),
+            ),
+        )
+    }
+
+    async function onTemplateFileSelect(file: File) {
+        const templateFromFile = await loadTemplateFromFile(file)
+
+        if (verifyTemplateFileDataFormat(templateFromFile)) {
+            templateDispatch(setTemplate(templateFromFile))
+            applyTemplate(templateFromFile)
+        }
+    }
+
+    function onPrimaryKeyElementChange(
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) {
+        const targetColumn = event.target.name
+        const checked = event.target.checked
+
+        setTemplatePrimaryKey((currentPrimaryKey) => {
+            const nextPrimaryKey = new Map(currentPrimaryKey)
+
+            if (checked) {
+                const mappedSourceColumn =
+                    templateMapping.get(targetColumn) ?? ''
+                nextPrimaryKey.set(targetColumn, mappedSourceColumn)
+            } else {
+                nextPrimaryKey.delete(targetColumn)
+            }
+
+            return nextPrimaryKey
+        })
+    }
+
+    function onColumMatchElementChange(
+        event: React.ChangeEvent<HTMLSelectElement>,
+    ) {
+        const targetColumn = event.target.name
+        const sourceColumn = event.target.value
+
+        setTemplateMapping((currentMapping) => {
+            const nextMapping = new Map(currentMapping)
+            nextMapping.set(targetColumn, sourceColumn)
+            return nextMapping
+        })
+
+        setTemplatePrimaryKey((currentPrimaryKey) => {
+            if (!currentPrimaryKey.has(targetColumn)) {
+                return currentPrimaryKey
+            }
+
+            const nextPrimaryKey = new Map(currentPrimaryKey)
+            nextPrimaryKey.set(targetColumn, sourceColumn)
+            return nextPrimaryKey
+        })
+    }
+
+    async function onPredefinedTemplateSelect(
+        event: React.ChangeEvent<HTMLSelectElement>,
+    ) {
+        const selectedTemplate = predefinedTemplates.find((template) => {
+            return template.name === event.target.value
+        })
+
+        if (selectedTemplate) {
+            const templateFromURL = await loadTemplateFromURL(
+                selectedTemplate.path,
+            )
+
+            if (verifyTemplateFileDataFormat(templateFromURL)) {
+                templateDispatch(setTemplate(templateFromURL))
+                applyTemplate(templateFromURL)
+                setSelectedPredefinedTemplate(selectedTemplate)
+            }
+        }
+    }
+
+    function onContinueToEvaluationClick() {
+        templateDispatch(setTemplate(buildTemplateFromState()))
+        navigation('/evaluation')
     }
 
     return (
         <div className={Style.dataSynchronizationScreen}>
-            <div className={Style.dataSynchronizationScreenList}>
-                <div className={Style.header}>
-                    <p>{t('insert_into', { targetName })}</p>
-                    <br />
-                    <div className="tooltip">
-                        <button
-                            onClick={() =>
-                                provideFile(insertions, 'insertion_filename')
-                            }
-                            disabled={insertions === ''}
-                        >
-                            <img src={DownloadIcon} alt="Download insertions" />
-                        </button>
-                        <span className="tooltipText">
-                            {t('download_as_csv')}
-                        </span>
-                    </div>
-                </div>
-                <textarea
-                    value={insertions}
-                    readOnly
-                    data-testid="insertions-textarea"
-                ></textarea>
-            </div>
+            <MultiScreenNavigationButton
+                imageUrl={arrowLeft}
+                onClickCallback={() => navigation('/')}
+                ariaLabel={t('return_to_previous_screen')}
+                testId={''}
+            />
+
+            <TemplateSelectionCard
+                selectedPredefinedTemplate={selectedPredefinedTemplate}
+                onPredefinedTemplateSelect={onPredefinedTemplateSelect}
+                predefinedTemplates={predefinedTemplates}
+                onTemplateFileSelect={onTemplateFileSelect}
+            />
 
             {isLoading && (
                 <div
@@ -94,32 +291,33 @@ export default function DataSynchronizationScreen() {
                     aria-label={t('loading_data')}
                 ></div>
             )}
-            {errorMessages && <p role="alert">{errorMessages}</p>}
+            {errorMessages && (
+                <p role="alert" className={Style.errorMessage}>
+                    {errorMessages}
+                </p>
+            )}
 
-            <div className={Style.dataSynchronizationScreenList}>
-                <div className={Style.header}>
-                    <p>{t('remove_from', { targetName })}</p>
-                    <br />
-                    <div className="tooltip">
-                        <button
-                            onClick={() =>
-                                provideFile(deletions, 'deletion_filename')
-                            }
-                            disabled={deletions === ''}
-                        >
-                            <img src={DownloadIcon} alt="Download deletions" />
-                        </button>
-                        <span className="tooltipText">
-                            {t('download_as_csv')}
-                        </span>
-                    </div>
-                </div>
-                <textarea
-                    value={deletions}
-                    readOnly
-                    data-testid="deletions-textarea"
-                ></textarea>
-            </div>
+            <TemplateCreationCard
+                targetHeader={header.targetHeader}
+                templatePrimaryKey={templatePrimaryKey}
+                onPrimaryKeyElementChange={onPrimaryKeyElementChange}
+                templateMapping={templateMapping}
+                onColumMatchElementChange={onColumMatchElementChange}
+                sourceHeader={header.sourceHeader}
+            />
+
+            <MultiScreenNavigationButton
+                imageUrl={arrowRight}
+                onClickCallback={() => onContinueToEvaluationClick()}
+                ariaLabel={t('continue_to_evaluation')}
+                testId={''}
+                disabled={
+                    !(templatePrimaryKey.size > 0) ||
+                    !(templateMapping.size > 0) ||
+                    !header.targetHeader.length ||
+                    !header.sourceHeader.length
+                }
+            />
         </div>
     )
 }

@@ -1,18 +1,28 @@
 {
     "data_source": "Datasource",
+    "source_system": "Source System",
+    "target_system": "Target System",
     "no_file_selected": "No file selected",
     "file": "File:",
     "put_data_file_here": "Drop file to upload or click to open file-selection-dialog",
 
     "insertion_filename": "insert_into_cloud.csv",
     "deletion_filename": "suspend_from_cloud.csv",
+    "template_filename": "template.json",
 
     "insert_into": "Create new in {{targetName}}:",
     "remove_from": "Remove from {{targetName}}:",
     "download_as_csv": "Download as CSV",
+    "download_template": "Download Template",
 
     "error_fetching_data": "Error parsing files. Check congruence of files and template.",
     "loading_data": "Loading data...",
 
-    "continue_to_evaluation": "Continue to evaluation"
+    "continue_to_evaluation": "Continue to evaluation",
+    "return_to_previous_screen": "Return to previous screen",
+
+    "choose_template": "Choose template",
+    "compose_template": "Compose template",
+
+    "no_matching_template_found": "No matching template found"
 }

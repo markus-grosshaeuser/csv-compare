@@ -3,6 +3,8 @@ import { configureStore } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import fileReducer from '../src/redux/fileSlice'
+import templateReducer from '../src/redux/templateSlice'
+import csvHeaderReducer from '../src/redux/csvHeaderSlice'
 import { render } from '@testing-library/react'
 
 type RenderOptions = {
@@ -17,6 +19,8 @@ export function renderWithProviders(
     const store = configureStore({
         reducer: {
             file: fileReducer,
+            template: templateReducer,
+            csvHeader: csvHeaderReducer,
         },
         preloadedState,
     })

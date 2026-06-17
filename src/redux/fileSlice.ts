@@ -7,12 +7,12 @@ export type FileEntry = {
 
 export type FileState = {
     source: FileEntry
-    destination: FileEntry
+    target: FileEntry
 }
 
 const fileState: FileState = {
     source: { name: '', objectUrl: '' },
-    destination: { name: '', objectUrl: '' },
+    target: { name: '', objectUrl: '' },
 }
 
 export const fileSlice = createSlice({
@@ -28,15 +28,15 @@ export const fileSlice = createSlice({
             state.value.source.name = action.payload.name
             state.value.source.objectUrl = action.payload.objectUrl
         },
-        setDestinationFile: (
+        setTargetFile: (
             state: { value: FileState },
             action: PayloadAction<FileEntry>,
         ) => {
-            state.value.destination.name = action.payload.name
-            state.value.destination.objectUrl = action.payload.objectUrl
+            state.value.target.name = action.payload.name
+            state.value.target.objectUrl = action.payload.objectUrl
         },
     },
 })
 
-export const { setSourceFile, setDestinationFile } = fileSlice.actions
+export const { setSourceFile, setTargetFile } = fileSlice.actions
 export default fileSlice.reducer

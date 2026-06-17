@@ -1,88 +1,118 @@
-/**
- * Represents a tuple structure that defines a relationship between a target column and a source column.
- *
- * This type is commonly used to map or associate columns in different data sets or tables where
- * the values in a source column need to align or correspond with the values in a target column.
- *
- * Properties:
- * - `target`: Specifies the name of the target column.
- * - `source`: Specifies the name of the source column.
- */
 export type MatchingColumnsTuple = {
-    target: string
     source: string
+    target: string
 }
 
 /**
- * Creates an array of numeric indices based on the positions of primary key values within a header array.
+ * Creates numeric indices for primary keys based on their positions in source and target headers.
  *
- * @param {string[]} primaryKeyValues - An array of primary key values to be matched within the header.
- * @param {string[]} header - The array that represents the header, used for mapping primary key values to indices.
- * @return {number[]} An array of numeric indices corresponding to the positions of the primary key values in the header.
- * Returns an empty array if the header is empty.
+ * @param {Map<string, string>} primaryKey - A mapping of target primary key fields to source primary key fields.
+ * @param {string[]} sourceHeader - An array representing the header of the source data, containing field names.
+ * @param {string[]} targetHeader - An array representing the header of the target data, containing field names.
+ * @return {Object} An object containing numeric indices of source and target primary keys.
+ *                  The object includes two properties: 'sourceKey' (array of numeric indices for source primary keys)
+ *                  and 'targetKey' (array of numeric indices for target primary keys).
  */
 export function createNumericPkIndices(
-    primaryKeyValues: string[],
-    header: string[],
-): number[] {
-    if (header.length === 0) {
-        return []
+    primaryKey: Map<string, string>,
+    sourceHeader: string[],
+    targetHeader: string[],
+): { sourceKey: number[]; targetKey: number[] } {
+    const targetPrimaryKey: string[] = Array.from(primaryKey.keys())
+    const sourcePrimaryKey: string[] = Array.from(primaryKey.values())
+    const numericTargetPrimaryKey: number[] = targetPrimaryKey.map(
+        (targetPK: string) => targetHeader.indexOf(targetPK),
+    )
+    const numericSourcePrimaryKey: number[] = sourcePrimaryKey.map(
+        (sourcePK: string) => sourceHeader.indexOf(sourcePK),
+    )
+    return {
+        sourceKey: numericSourcePrimaryKey,
+        targetKey: numericTargetPrimaryKey,
     }
-    const numericKey: number[] = []
-    primaryKeyValues.forEach((value: string) => {
-        numericKey.push(header.indexOf(value))
-    })
-    return numericKey
 }
 
 /**
- * Generates a reorder key array, mapping the positions of header values from a source header array.
+ * Creates a reorder key based on a mapping of target headers to source headers.
  *
- * @param {Map<string, string>} headerMap - A map where keys represent reorder criteria and values correspond to header names to be matched.
- * @param {string[]} sourceHeader - An array of strings representing the source header values.
- * @return {number[]} An array of integers representing the positions of the mapped header values from the sourceHeader array. If a value is not found, -1 is used.
+ * @param {Map<string, string>} headerMap - A mapping of target headers to source headers.
+ * @param {string[]} sourceHeader - An array representing the header of the source data, containing field names.
+ * @param {string[]} targetHeader - An array representing the header of the target data, containing field names.
+ * @return {number[]} An array of numeric indices representing the reorder key.
  */
 export function createReorderKey(
     headerMap: Map<string, string>,
     sourceHeader: string[],
+    targetHeader: string[],
 ): number[] {
     const reorderKey: number[] = []
-    headerMap.forEach((value: string, key: string) => {
-        reorderKey.push(key !== '' ? sourceHeader.indexOf(value) : -1)
+    targetHeader.forEach((element: string) => {
+        const key = headerMap.get(element)
+        if (key === undefined) {
+            reorderKey.push(-1)
+        }
+        if (typeof key === 'string') {
+            reorderKey.push(key !== '' ? sourceHeader.indexOf(key) : -1)
+        }
     })
     return reorderKey
 }
 
 /**
- * Reorders elements in a dataset based on a specified reorder key.
+ * Reorders the arrays within a Map object according to the specified reorderKey array.
  *
- * @param {string[]} sourceLine - The original dataset represented as an array of strings.
- * @param {number[]} reorderKey - An array of indices used to reorder the elements of the dataset.
- * Each index in the reorderKey corresponds to the position of the element to include in the returned dataset.
- * Invalid indices (negative or out of range) will result in an empty string at the corresponding position in the result.
- *
- * @return {string[]} A reordered dataset where elements are arranged according to the positions specified by the reorderKey.
- * Invalid indices in the reorderKey will be replaced with empty strings in the result.
+ * @param {number[]} reorderKey - An array of indices specifying the order in which elements of each array in the Map should be rearranged.
+ * @param {Map<string, string[]>} data - A Map object where the values are arrays of strings to be reordered based on the reorderKey.
+ * @return {Map<string, string[]>} A new Map object containing the arrays with their elements reordered based on the specified reorderKey. If a key in the reorderKey is out of bounds, an empty string is used in its place.
  */
-export function applyReorderKeyToDataset(
-    sourceLine: string[],
+export function applyReorderKey(
     reorderKey: number[],
-): string[] {
-    return reorderKey.map((element) => {
-        if (element < 0 || element >= sourceLine.length) {
-            return ''
-        } else {
-            return sourceLine[element]
-        }
+    data: Map<string, string[]>,
+): Map<string, string[]> {
+    if (reorderKey.length === 0) {
+        return data
+    }
+    const reorderedData: Map<string, string[]> = new Map<string, string[]>()
+    data.forEach((value, key) => {
+        const reorderedArray = Array.from(
+            reorderKey.map((key) => {
+                return key < 0 || key >= value.length ? '' : value[key]
+            }),
+        )
+        reorderedData.set(key, reorderedArray)
     })
+    return reorderedData
 }
 
 /**
- * Filters the entries of the first dataset by excluding any entries whose keys exist in the second dataset.
+ * Compares the contents of two file content mappings and identifies insertions and deletions
+ * based on the differences between the source and target file contents.
  *
- * @param {Map<string, string[]>} datasetOne - The first dataset containing key-value pairs to be filtered.
- * @param {Map<string, string[]>} datasetTwo - The second dataset containing keys to be excluded from the first dataset.
- * @return {string[][]} - A 2D array containing values from datasetOne whose keys are not present in datasetTwo.
+ * @param {string[]} targetHeader - The header to be added to the result lists of insertions and deletions.
+ * @param {Map<string, string[]>} sourceFileContent - The source file content mapping, where the key is a file identifier and the value is an array of strings representing lines or content.
+ * @param {Map<string, string[]>} targetFileContent - The target file content mapping, where the key is a file identifier and the value is an array of strings representing lines or content.
+ * @return {Object} An object containing two properties:
+ *                  - `insertions`: An array including the target header followed by the lines/content inserted in the target file.
+ *                  - `deletions`: An array including the target header followed by the lines/content deleted from the target file.
+ */
+export function getInsertionsAndDeletions(
+    targetHeader: string[],
+    sourceFileContent: Map<string, string[]>,
+    targetFileContent: Map<string, string[]>,
+): { insertions: string[][]; deletions: string[][] } {
+    const ins = filterMaps(sourceFileContent, targetFileContent)
+    ins.unshift(targetHeader)
+    const outs = filterMaps(targetFileContent, sourceFileContent)
+    outs.unshift(targetHeader)
+    return { insertions: ins, deletions: outs }
+}
+
+/**
+ * Filters entries in the first dataset by removing any entries that have keys present in the second dataset and extracts their values.
+ *
+ * @param {Map<string, string[]>} datasetOne - The primary dataset to filter.
+ * @param {Map<string, string[]>} datasetTwo - The dataset containing keys to exclude from the first dataset.
+ * @return {string[][]} An array of string arrays representing the values from the filtered entries of the first dataset.
  */
 export function filterMaps(
     datasetOne: Map<string, string[]>,
